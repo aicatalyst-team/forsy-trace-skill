@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: poc-forsy-trace-skill
+  labels:
+    app.kubernetes.io/name: forsy-trace-skill
+    app.kubernetes.io/managed-by: autopoc

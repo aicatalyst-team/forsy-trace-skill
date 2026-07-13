@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: forsy-trace-skill-build-jsonl-exports
+  namespace: poc-forsy-trace-skill
+  labels:
+    app: forsy-trace-skill
+    autopoc.io/project: forsy-trace-skill
+    autopoc.io/scenario: build-jsonl-exports
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 120
+  template:
+    spec:
+      containers:
+        - name: forsy-trace-skill
+          image: quay.io/aicatalyst/forsy-trace-skill:latest
+          imagePullPolicy: Always
+          command: ["python3"]
+          args: ["scripts/build_jsonl_exports.py"]
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      restartPolicy: Never

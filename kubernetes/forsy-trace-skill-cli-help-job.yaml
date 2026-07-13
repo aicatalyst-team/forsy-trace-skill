@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: forsy-trace-skill-cli-help
+  namespace: poc-forsy-trace-skill
+  labels:
+    app: forsy-trace-skill
+    autopoc.io/project: forsy-trace-skill
+    autopoc.io/scenario: cli-help
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 120
+  template:
+    spec:
+      containers:
+        - name: forsy-trace-skill
+          image: quay.io/aicatalyst/forsy-trace-skill:latest
+          imagePullPolicy: Always
+          command: ["node"]
+          args: ["bin/forsy-trace-skill.js", "--help"]
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      restartPolicy: Never
