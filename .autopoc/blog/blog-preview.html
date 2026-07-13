@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deploying an AI agent trace toolkit on Red Hat OpenShift AI</title>
+  <meta name="description" content="Learn how to containerize Forsy Trace Skill with UBI images and deploy it as Kubernetes Jobs on Red Hat OpenShift AI. Four validation scenarios passed with zero errors.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700&family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      themeVariables: {
+        primaryColor: '#EE0000',
+        primaryTextColor: '#FFFFFF',
+        primaryBorderColor: '#A30000',
+        lineColor: '#6A6E73',
+        secondaryColor: '#F0F0F0',
+        tertiaryColor: '#0066CC'
+      }
+    });
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Red Hat Text', sans-serif; font-size: 18px; line-height: 1.7; color: #151515; background: #FFFFFF; }
+    .rh-banner { background: #151515; padding: 12px 0; border-bottom: 3px solid #EE0000; }
+    .rh-banner-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; gap: 24px; }
+    .rh-logo svg { height: 28px; width: auto; }
+    .rh-nav { display: flex; gap: 20px; }
+    .rh-nav a { color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 500; }
+    .blog-bar { background: #F0F0F0; border-bottom: 1px solid #D2D2D2; padding: 14px 0; }
+    .blog-bar-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; gap: 8px; font-size: 14px; color: #6A6E73; }
+    .blog-bar-inner a { color: #0066CC; text-decoration: none; }
+    .blog-bar-inner .sep { color: #B8BBBE; }
+    .hero { background: linear-gradient(135deg, #151515 0%, #292929 60%, #3F0000 100%); padding: 80px 0 72px; position: relative; overflow: hidden; }
+    .hero::after { content: ''; position: absolute; top: 0; right: 0; width: 40%; height: 100%; background: linear-gradient(180deg, rgba(238,0,0,0.08) 0%, rgba(238,0,0,0.02) 100%); pointer-events: none; }
+    .hero-inner { max-width: 800px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+    .hero-label { display: inline-block; background: #EE0000; color: #FFFFFF; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 12px; border-radius: 2px; margin-bottom: 24px; }
+    .hero h1 { font-family: 'Red Hat Display', sans-serif; font-size: 42px; font-weight: 700; line-height: 1.15; color: #FFFFFF; margin-bottom: 20px; }
+    .hero .subtitle { font-size: 20px; color: #B8BBBE; line-height: 1.5; margin-bottom: 32px; }
+    .hero-meta { display: flex; gap: 16px; color: #A3A3A3; font-size: 14px; }
+    .hero-meta .author { color: #FFFFFF; font-weight: 500; }
+    .hero-meta .dot { color: #6A6E73; }
+    .article-wrap { max-width: 800px; margin: 0 auto; padding: 56px 24px 80px; }
+    .article-wrap p { margin-bottom: 24px; }
+    .article-wrap a { color: #0066CC; text-decoration: none; }
+    .article-wrap h2 { font-family: 'Red Hat Display', sans-serif; font-size: 28px; font-weight: 600; margin-top: 48px; margin-bottom: 20px; padding-top: 8px; border-top: 2px solid #F0F0F0; }
+    .article-wrap h2:first-of-type { margin-top: 40px; }
+    .article-wrap h3 { font-family: 'Red Hat Display', sans-serif; font-size: 20px; font-weight: 600; margin-top: 32px; margin-bottom: 12px; }
+    .article-wrap ul, .article-wrap ol { margin-bottom: 24px; padding-left: 24px; }
+    .article-wrap li { margin-bottom: 16px; }
+    .tagline { font-size: 20px; font-weight: 500; color: #383838; margin: 32px 0; padding: 20px 24px; border-left: 4px solid #EE0000; background: #FEF0F0; }
+    .image-placeholder { margin: 40px 0; background: #F0F0F0; border: 2px dashed #D2D2D2; border-radius: 8px; padding: 48px 32px; text-align: center; }
+    .image-placeholder .ph-icon { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; background: #E0E0E0; border-radius: 50%; margin-bottom: 16px; }
+    .image-placeholder .ph-icon svg { width: 28px; height: 28px; fill: #6A6E73; }
+    .image-placeholder .ph-title { font-family: 'Red Hat Display', sans-serif; font-size: 16px; font-weight: 600; color: #383838; margin-bottom: 8px; }
+    .image-placeholder .ph-alt { font-size: 14px; color: #6A6E73; font-style: italic; max-width: 560px; margin: 0 auto; }
+    .mermaid { margin: 40px 0; text-align: center; background: #FFFFFF; padding: 24px; border-radius: 8px; border: 1px solid #F0F0F0; }
+    .article-wrap pre { background: #1E1E1E; color: #D4D4D4; font-family: 'Red Hat Mono', monospace; font-size: 14px; line-height: 1.6; padding: 24px; border-radius: 8px; overflow-x: auto; margin-bottom: 24px; }
+    .article-wrap code { font-family: 'Red Hat Mono', monospace; font-size: 15px; background: #F0F0F0; padding: 2px 6px; border-radius: 3px; }
+    .article-wrap pre code { background: none; padding: 0; font-size: 14px; }
+    .article-wrap table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+    .article-wrap th, .article-wrap td { border: 1px solid #D2D2D2; padding: 10px 14px; text-align: left; font-size: 16px; }
+    .article-wrap th { background: #F0F0F0; font-weight: 600; }
+    .rh-footer { background: #151515; padding: 40px 0; }
+    .rh-footer-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; justify-content: space-between; }
+    .rh-footer-text { color: #6A6E73; font-size: 13px; }
+    .rh-footer-links { display: flex; gap: 24px; }
+    .rh-footer-links a { color: #A3A3A3; text-decoration: none; font-size: 13px; }
+    @media (max-width: 768px) { .hero h1 { font-size: 30px; } .article-wrap { padding: 40px 20px 60px; } }
+  </style>
+</head>
+<body>
+  <header class="rh-banner">
+    <div class="rh-banner-inner">
+      <div class="rh-logo">
+        <svg viewBox="0 0 613 145" xmlns="http://www.w3.org/2000/svg">
+          <path d="M127.47 83.49c12.51 0 30.61-2.58 30.61-17.46a14 14 0 0 0-.31-3.42l-7.45-32.36c-1.72-7.12-3.23-10.35-15.73-16.6C124.89 8.69 103.76.5 97.51.5 91.69.5 90 8 83.06 8c-6.68 0-11.64-5.6-17.89-5.6-6 0-9.91 4.09-12.93 12.5 0 0-8.41 23.72-9.49 27.16a6.43 6.43 0 0 0-.22 1.94c0 9.22 36.3 39.45 84.94 39.45M127.47 83.49c-12.51 0-30.61 2.58-30.61 17.46a14 14 0 0 0 .31 3.42l7.45 32.36c1.72 7.12 3.23 10.35 15.73 16.6 9.7 4.96 30.83 13.15 37.08 13.15 5.82 0 7.51-7.5 14.45-7.5 6.68 0 11.64 5.6 17.89 5.6 6 0 9.91-4.09 12.93-12.5 0 0 8.41-23.72 9.49-27.16a6.43 6.43 0 0 0 .22-1.94c0-9.22-36.3-39.45-84.94-39.45" fill="#EE0000"/>
+          <text x="220" y="95" font-family="Red Hat Display, sans-serif" font-weight="700" font-size="72" fill="#FFFFFF">Red Hat</text>
+        </svg>
+      </div>
+      <nav class="rh-nav"><a href="#">Products</a><a href="#">Solutions</a><a href="#">Blog</a></nav>
+    </div>
+  </header>
+  <div class="blog-bar"><div class="blog-bar-inner"><a href="#">Red Hat Developer Blog</a> <span class="sep">/</span> <a href="#">AI/ML</a> <span class="sep">/</span> Agent trace tooling</div></div>
+  <section class="hero">
+    <div class="hero-inner">
+      <span class="hero-label">Red Hat OpenShift AI</span>
+      <h1>Deploying an AI agent trace toolkit on Red Hat OpenShift AI</h1>
+      <p class="subtitle">How we containerized and validated Forsy Trace Skill as batch Kubernetes Jobs</p>
+      <div class="hero-meta">
+        <span class="author">AutoPoC</span>
+        <span class="dot">&middot;</span>
+        <span>July 2026</span>
+        <span class="dot">&middot;</span>
+        <span>6 min read</span>
+      </div>
+    </div>
+  </section>
+  <article class="article-wrap">
+<div class="image-placeholder">
+  <div class="ph-icon"><svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></div>
+  <div class="ph-title">Image 1: Hero image showing AI agent trace data flowing into containerized processing on OpenShift</div>
+  <div class="ph-alt">Structured AI agent trace data flows into a containerized validation pipeline running on Red Hat OpenShift, producing validated datasets</div>
+</div>
+
+<p>AI agents are doing complex, multi-step work: running scientific computations, drafting legal analyses, coordinating tool calls across services. The final output tells you what the agent produced, but not what happened along the way. Which tools did it use? Where did it retry? What observations shaped its decisions? Without structured records of agent behavior, debugging and improving these systems is guesswork.</p>
+
+<p>Can this kind of data-processing tooling run reliably on <a href="https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai">Red Hat OpenShift AI</a>? We set out to answer that by containerizing <a href="https://github.com/Forsy-AI/forsy-trace-skill">Forsy Trace Skill</a>, an open-source toolkit for capturing structured agent traces, and deploying it as Kubernetes Jobs on OpenShift.</p>
+
+<h2>What Forsy Trace Skill does</h2>
+
+<p>Forsy Trace Skill captures the process behind completed agent work. A trace record includes task context, each step the agent took, tool usage, observations, reasoning signals, retries, feedback, and final artifacts. The project ships with:</p>
+
+<ul>
+<li>A JSON schema defining the trace format (version 0.1)</li>
+<li>A command-line interface (CLI) installer for Node.js that scaffolds the schema into your project</li>
+<li>Python scripts for validation, normalization, and JSON Lines (JSONL) export</li>
+<li>10 example traces spanning drug discovery, legal analysis, scientific computing, and product prototyping</li>
+</ul>
+
+<p>The Python scripts use only the standard library. The Node.js CLI copies local files and makes no network calls.</p>
+
+<h2>Why structured agent traces matter for AI platforms</h2>
+
+<p>Agent trace data sits in a growing category of AI infrastructure: tools that don&rsquo;t serve models but support the lifecycle around them. On <a href="https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai">Red Hat OpenShift AI</a>, this maps to data preparation and evaluation layers. Trace validation acts as a quality gate in a pipeline, and JSONL export feeds analysis notebooks.</p>
+
+<p>Consider a team running multiple AI agents on OpenShift AI. A nightly Kubernetes Job could validate those traces against the schema, normalize the data, and export it to JSONL for the data science team to analyze in Jupyter workbenches. That&rsquo;s the kind of integration this proof of concept validates.</p>
+
+<h2>Containerizing with Universal Base Image</h2>
+
+<p>The project has no existing Dockerfile. We created one using the Red Hat Universal Base Image (UBI) for Node.js, which includes both Node.js 22 and Python 3 out of the box.</p>
+
+<pre><code>FROM registry.access.redhat.com/ubi9/nodejs-22
+
+WORKDIR /opt/app-root/src
+COPY package.json ./
+RUN npm install --production 2&gt;/dev/null || true
+COPY . .
+
+USER 0
+RUN chgrp -R 0 /opt/app-root &amp;&amp; chmod -R g=u /opt/app-root
+USER 1001
+
+ENTRYPOINT [&quot;node&quot;, &quot;bin/forsy-trace-skill.js&quot;]
+CMD [&quot;--help&quot;]</code></pre>
+
+<p>The npm install line suppresses output because this project has no runtime dependencies. The command exists to validate the package.json structure. The USER 0 / USER 1001 pattern handles OpenShift&rsquo;s security model: switch to root for file permissions, then back to a non-root user. OpenShift assigns a random user ID (UID) at runtime that belongs to group 0, so the chgrp call ensures all files are accessible.</p>
+
+<p>We built the image using an OpenShift BuildConfig with binary input, uploading source to the cluster for on-cluster builds and pushing directly to the Quay.io registry.</p>
+
+<div class="mermaid">
+graph LR
+    A["Source code<br/>Node.js + Python"] -->|oc start-build| B["OpenShift<br/>BuildConfig"]
+    B -->|Build on cluster| C["Container image<br/>UBI9 + Node 22"]
+    C -->|Push| D["Quay.io<br/>registry"]
+    D -->|Pull| E["Kubernetes<br/>Jobs"]
+</div>
+
+<h2>Deploying as Kubernetes Jobs</h2>
+
+<p>Since Forsy Trace Skill is a CLI toolkit, not a web service, we deployed it as Kubernetes Jobs rather than Deployments. Each Job runs one script, captures its output in logs, and exits. No Services, no Routes, no persistent storage needed.</p>
+
+<p>We created four Jobs. Each specification is minimal: the container image, a command override, resource limits (256 MiB memory, 250 millicores CPU), and a security context that drops all capabilities. Here&rsquo;s the validate-traces Job:</p>
+
+<pre><code>apiVersion: batch/v1
+kind: Job
+metadata:
+  name: forsy-trace-skill-validate-traces
+  namespace: poc-forsy-trace-skill
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 120
+  template:
+    spec:
+      containers:
+        - name: forsy-trace-skill
+          image: quay.io/aicatalyst/forsy-trace-skill:latest
+          command: [&quot;python3&quot;]
+          args: [&quot;scripts/validate_traces.py&quot;]
+          resources:
+            requests:
+              memory: &quot;256Mi&quot;
+              cpu: &quot;250m&quot;
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [&quot;ALL&quot;]
+      restartPolicy: Never</code></pre>
+
+<p>This pattern works well for batch AI workloads on <a href="https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai">Red Hat OpenShift AI</a>. Jobs are the right abstraction for tools that produce output and exit.</p>
+
+<h2>Validation results</h2>
+
+<p>All four Jobs completed successfully in under 1 second each:</p>
+
+<table>
+<thead>
+<tr><th>Scenario</th><th>Output</th><th>Duration</th></tr>
+</thead>
+<tbody>
+<tr><td>CLI help</td><td>Displayed usage info with init, --out, --force options</td><td>&lt; 1s</td></tr>
+<tr><td>Validate traces</td><td>10 traces checked, 10 passed, 0 warnings, 0 errors</td><td>&lt; 1s</td></tr>
+<tr><td>JSONL export</td><td>10 manifests, 10 traces, 248 step records exported</td><td>&lt; 1s</td></tr>
+<tr><td>Normalize traces</td><td>10 examples normalized from 11 raw traces and 11 manifests</td><td>&lt; 1s</td></tr>
+</tbody>
+</table>
+
+<div class="mermaid">
+graph TD
+    subgraph "poc-forsy-trace-skill namespace"
+        J1["Job: cli-help<br/>PASS"] 
+        J2["Job: validate-traces<br/>PASS"]
+        J3["Job: build-jsonl-exports<br/>PASS"]
+        J4["Job: normalize-traces<br/>PASS"]
+    end
+    IMG["quay.io/aicatalyst/<br/>forsy-trace-skill:latest"] --> J1
+    IMG --> J2
+    IMG --> J3
+    IMG --> J4
+</div>
+
+<p>The validation script checked all 10 example traces against the JSON schema, verified step ordering, and detected no duplicate trace IDs. The export script produced three JSONL files totaling 248 step records. The normalization script processed 11 raw folders, resolved one duplicate by content hash, and generated 10 clean examples.</p>
+
+<h2>What we learned</h2>
+
+<p><strong>UBI Node.js images include Python.</strong> The UBI 9 Node.js 22 image ships with Python 3, which saved us from a multi-stage build. For projects that mix JavaScript and Python, this simplification matters.</p>
+
+<p><strong>OpenShift builds need explicit USER directives.</strong> The default user in UBI Node.js images is 1001 (non-root). Running chgrp requires root, so the Dockerfile must temporarily switch to USER 0. Our first build failed on this.</p>
+
+<p><strong>Job-based deployments are clean for CLI tools.</strong> Rather than keeping a CLI tool alive in a Deployment (which would enter CrashLoopBackOff), Jobs run, produce output, and exit. OpenShift tracks completion and stores logs.</p>
+
+<p><strong>Quay repositories default to private.</strong> The build pushed successfully, but pods couldn&rsquo;t pull the image until we made the repository public. For automated pipelines, pre-configure repository visibility or use image pull secrets.</p>
+
+<h2>Try it yourself</h2>
+
+<p>The container image is publicly available at quay.io/aicatalyst/forsy-trace-skill:latest. The source, Dockerfile, and Kubernetes manifests are in the <a href="https://github.com/aicatalyst-team/forsy-trace-skill">fork repository</a>.</p>
+
+<pre><code>kubectl create namespace poc-forsy-trace-skill
+kubectl apply -f https://raw.githubusercontent.com/aicatalyst-team/forsy-trace-skill/main/kubernetes/forsy-trace-skill-validate-traces-job.yaml
+kubectl logs job/forsy-trace-skill-validate-traces -n poc-forsy-trace-skill</code></pre>
+
+<p>If you&rsquo;re working with AI agent systems, batch processing tools like this are a good starting point for validating your tooling on <a href="https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai">Red Hat OpenShift AI</a>. Explore the <a href="https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/">OpenShift AI documentation</a> to get started.</p>
+  </article>
+  <footer class="rh-footer">
+    <div class="rh-footer-inner">
+      <div class="rh-footer-text">&copy; 2026 Red Hat, Inc.</div>
+      <div class="rh-footer-links"><a href="#">Privacy</a><a href="#">Terms</a></div>
+    </div>
+  </footer>
+</body>
+</html>
