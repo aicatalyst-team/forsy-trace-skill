@@ -1,0 +1,10 @@
+.git
+LICENSE
+CITATION.cff
+kubernetes/
+poc-plan.md
+__pycache__/
+node_modules/
+.env*
+*.pyc
+.autopoc/

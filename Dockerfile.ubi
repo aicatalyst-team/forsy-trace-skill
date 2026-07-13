@@ -1,0 +1,22 @@
+FROM registry.access.redhat.com/ubi9/nodejs-22
+
+WORKDIR /opt/app-root/src
+
+# Copy package files first for layer caching
+COPY package.json ./
+
+# Install npm dependencies (none needed, but ensures package.json is valid)
+RUN npm install --production 2>/dev/null || true
+
+# Copy application code
+COPY . .
+
+# OpenShift compatibility
+RUN chgrp -R 0 /opt/app-root && chmod -R g=u /opt/app-root
+
+# No EXPOSE - CLI tool, no port
+
+USER 1001
+
+ENTRYPOINT ["node", "bin/forsy-trace-skill.js"]
+CMD ["--help"]
