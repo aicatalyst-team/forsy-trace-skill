@@ -1,4 +1,10 @@
-# Forsy Trace Skill
+> [!WARNING]
+> **This repository is archived.**
+>
+> Archived on 2026-09-08 by the AI Catalyst Platform Team.
+> It is read-only and no longer maintained.
+
+---# Forsy Trace Skill
 
 [![npm version](https://img.shields.io/npm/v/forsy-trace-skill.svg)](https://www.npmjs.com/package/forsy-trace-skill)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
